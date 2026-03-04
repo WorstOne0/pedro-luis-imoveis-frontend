@@ -39,7 +39,7 @@ export default function GoogleMaps({ children, onCreateMap, height = "100%", wid
       if (onCreateMap) onCreateMap(map);
       setMyMap(map);
     },
-    [onCreateMap]
+    [onCreateMap],
   );
 
   return (

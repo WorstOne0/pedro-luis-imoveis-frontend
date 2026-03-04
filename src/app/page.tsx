@@ -19,15 +19,12 @@ export default function Home() {
   const { realEstateList, setRealEstateList, setRealEstateSelected } = useRealEstateStore((state) => state);
   const { isSearchOpen } = useSearchBarStore((state) => state);
 
-  const { isLoading } = useApiFetch({ url: "http://localhost:4000/real_estate", method: "post" }, setRealEstateList);
+  const { isLoading } = useApiFetch({ url: "http://localhost:4000/real_estate", method: "get" }, setRealEstateList);
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
-
-  const onCreateMap = (map: google.maps.Map) => {
-    setMap(map);
-  };
+  const onCreateMap = (map: google.maps.Map) => setMap(map);
 
   const createMarkers = (realEstate: RealEstate, index: number) => {
     const icon = {
@@ -56,7 +53,6 @@ export default function Home() {
     return apartament_icon;
   };
 
-  //
   if (isLoading) {
     return <div>Loading...</div>;
   }

@@ -11,11 +11,7 @@ import "@/styles/global.css";
 
 const nunito = Nunito({ subsets: ["latin"] });
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
