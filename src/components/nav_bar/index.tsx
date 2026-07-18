@@ -19,13 +19,13 @@ export default function NavBar() {
   const { resolvedTheme, setTheme } = useTheme();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // next-themes only knows the real theme after hydration; rendering the icon
-  // before that mismatches the server output.
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => setIsMounted(true), []);
 
-  // Close the mobile menu on navigation, otherwise it stays open over the map.
-  useEffect(() => setIsMenuOpen(false), [pathname]);
+  // next-themes only knows the real theme after hydration; rendering the icon
+  // before that mismatches the server output. A mount flag is the documented
+  // workaround and necessarily runs in an effect.
+  const [isMounted, setIsMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setIsMounted(true), []);
 
   // Before hydration the resolved theme is unknown, so both the icon and the
   // label have to stay neutral or the server and client markup disagree.
@@ -83,7 +83,12 @@ export default function NavBar() {
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-background border-b-2 border-gray-200 dark:border-gray-700 flex flex-col py-[1rem] z-50">
           {ROUTES.map((route) => (
-            <Link key={route.value} href={route.value} className={`${linkClass(route.value)} py-[1.2rem] px-[2rem]`}>
+            <Link
+              key={route.value}
+              href={route.value}
+              onClick={() => setIsMenuOpen(false)}
+              className={`${linkClass(route.value)} py-[1.2rem] px-[2rem]`}
+            >
               {route.name}
             </Link>
           ))}
