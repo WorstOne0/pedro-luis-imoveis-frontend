@@ -23,7 +23,7 @@ export default function RealEstatePage(props: { params: Promise<{ id: string }> 
   useLogEvent("page_view", { page: "RealEstatePage", route: `/real_estate/${params.id}` });
 
   const { realEstateSelected, setRealEstateSelected } = useRealEstateStore((state) => state);
-  const { isLoading } = useApiFetch({ url: `http://localhost:4000/real_estate/${params.id}`, method: "post" }, setRealEstateSelected);
+  const { isLoading } = useApiFetch({ url: `/real_estate/${params.id}`, method: "get" }, setRealEstateSelected);
 
   const slideshowRef = useRef<SlideshowHandle>(null);
 
@@ -35,10 +35,15 @@ export default function RealEstatePage(props: { params: Promise<{ id: string }> 
     return <div>Loading...</div>;
   }
 
+  // A listing can have anywhere from zero to ten photos, so the side column is
+  // driven off what actually exists rather than fixed images[0]/images[1].
+  const gallery = realEstateSelected.images ?? [];
+  const remaining = Math.max(gallery.length - 2, 0);
+
   return (
     <div className="max-h-full w-full p-[1.5rem] flex flex-col overflow-y-auto">
       {/* Slideshow */}
-      <Slideshow ref={slideshowRef} images={[realEstateSelected.thumbnail, ...realEstateSelected.images]} />
+      <Slideshow ref={slideshowRef} images={[realEstateSelected.thumbnail, ...gallery].filter(Boolean)} />
 
       {/* Image */}
       <div className={`min-h-[50vh] w-full flex justify-between`}>
@@ -51,32 +56,41 @@ export default function RealEstatePage(props: { params: Promise<{ id: string }> 
             <FaArrowLeft size={15} />
           </Link>
         </div>
-        <div className={`min-h-[50vh] w-[15%] rounded-[0.8rem] flex flex-col justify-between ml-[1.5rem]`}>
-          <div className={`h-[32%] w-[100%] rounded-[0.8rem] relative cursor-pointer`} onClick={() => slideshowRef.current?.openSlideshow(1)}>
-            <img className={`h-[100%] w-[100%] rounded-[0.8rem] object-cover object-center`} src={realEstateSelected.images[0]} alt="" />
+        {/* Side thumbnails only make sense once there are extra photos to show */}
+        {gallery.length > 0 && (
+          <div className={`min-h-[50vh] w-[15%] rounded-[0.8rem] flex flex-col justify-between ml-[1.5rem]`}>
+            {gallery.slice(0, 2).map((image, index) => (
+              <div
+                key={`gallery_${index}`}
+                className={`h-[32%] w-[100%] rounded-[0.8rem] relative cursor-pointer`}
+                onClick={() => slideshowRef.current?.openSlideshow(index + 1)}
+              >
+                <img className={`h-[100%] w-[100%] rounded-[0.8rem] object-cover object-center`} src={image} alt="" />
+              </div>
+            ))}
+
+            {remaining > 0 && (
+              <div className={`h-[32%] w-[100%] rounded-[0.8rem] overflow-hidden relative`}>
+                <div className={`h-[100%] w-[100%] rounded-[0.8rem] relative cursor-pointer`} onClick={() => slideshowRef.current?.openSlideshow(3)}>
+                  <img
+                    className={`h-[100%] w-[100%] rounded-[0.8rem] object-cover object-center`}
+                    style={{ filter: "blur(8px)" }}
+                    src={gallery[2]}
+                    alt=""
+                  />
+                </div>
+                <div className="flex flex-col absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] select-none pointer-events-none">
+                  <span className="text-[2.2rem] font-bold text-center text-white" style={{ textShadow: "0 0 4px #000" }}>
+                    +{remaining}
+                  </span>
+                  <span className="text-[1.4rem] font-bold text-center text-white" style={{ textShadow: "0 0 4px #000" }}>
+                    Ver todas as fotos
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
-          <div className={`h-[32%] w-[100%] rounded-[0.8rem] relative cursor-pointer`} onClick={() => slideshowRef.current?.openSlideshow(2)}>
-            <img className={`h-[100%] w-[100%] rounded-[0.8rem] object-cover object-center`} src={realEstateSelected.images[1]} alt="" />
-          </div>
-          <div className={`h-[32%] w-[100%] rounded-[0.8rem] overflow-hidden relative`}>
-            <div className={`h-[100%] w-[100%] rounded-[0.8rem] relative cursor-pointer`} onClick={() => slideshowRef.current?.openSlideshow(0)}>
-              <img
-                className={`h-[100%] w-[100%] rounded-[0.8rem] object-cover object-center`}
-                style={{ filter: "blur(8px)" }}
-                src={realEstateSelected.images[1]}
-                alt=""
-              />
-            </div>
-            <div className="flex flex-col absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] select-none">
-              <span className="text-[2.2rem] font-bold text-center text-white" style={{ textShadow: "0 0 4px #000" }}>
-                +{realEstateSelected.images.length}
-              </span>
-              <span className="text-[1.4rem] font-bold text-center text-white" style={{ textShadow: "0 0 4px #000" }}>
-                Ver todas as fotos
-              </span>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Body */}
@@ -140,7 +154,9 @@ export default function RealEstatePage(props: { params: Promise<{ id: string }> 
             <div className="min-h-0 grow flex flex-col">
               <div className="flex justify-between">
                 <span className="font-bold text-[2.2rem]">Informações</span>
-                <span className="text-gray-500 text-[1.4rem] italic">Criado as 12/12/2024</span>
+                <span className="text-gray-500 text-[1.4rem] italic">
+                  {realEstateSelected.createdAt ? `Criado as ${new Date(realEstateSelected.createdAt).toLocaleDateString("pt-BR")}` : ""}
+                </span>
               </div>
 
               <div className="min-h-0 grow flex flex-col justify-center items-center">
@@ -151,19 +167,19 @@ export default function RealEstatePage(props: { params: Promise<{ id: string }> 
               <Card className="flex justify-center py-[0.5rem] dark:bg-secondary">
                 <div className="flex items-center px-[1rem]">
                   <FaBed size={16} color="text-foreground" className="mr-2" />
-                  <span>2</span>
+                  <span>{realEstateSelected.rooms}</span>
                 </div>
                 <div className="flex items-center px-[1rem]">
                   <FaBath size={16} color="text-foreground" className="mr-2" />
-                  <span>2</span>
+                  <span>{realEstateSelected.bathrooms}</span>
                 </div>
                 <div className="flex items-center px-[1rem]">
                   <PiGarage size={16} color="text-foreground" className="mr-2" />
-                  <span>2</span>
+                  <span>{realEstateSelected.garages}</span>
                 </div>
                 <div className="flex items-center px-[1rem]">
                   <GiExpand size={16} color="text-foreground" className="mr-2" />
-                  <span>2</span>
+                  <span>{realEstateSelected.area}m²</span>
                 </div>
               </Card>
             </div>

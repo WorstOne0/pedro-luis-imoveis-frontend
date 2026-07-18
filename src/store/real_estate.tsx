@@ -40,16 +40,22 @@ export type Address = {
 type RealEstateStore = {
   realEstateList: RealEstate[];
   realEstateSelected: RealEstate | null;
+  // Total matching the current filter, which is larger than realEstateList
+  // whenever the results span more than one page.
+  totalDocs: number | null;
   //
   setRealEstateList: (realEstateList: RealEstate[]) => void;
   setRealEstateSelected: (realEstate: RealEstate) => void;
+  setTotalDocs: (totalDocs: number | null) => void;
 };
 
 const useRealEstateStore = create<RealEstateStore>((set) => ({
   realEstateList: [],
   realEstateSelected: null,
+  totalDocs: null,
   setRealEstateList: (realEstateList: RealEstate[]) => set({ realEstateList: realEstateList }),
   setRealEstateSelected: (realEstate: RealEstate) => set({ realEstateSelected: realEstate }),
+  setTotalDocs: (totalDocs: number | null) => set({ totalDocs }),
 }));
 
 export default useRealEstateStore;

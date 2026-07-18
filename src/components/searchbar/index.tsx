@@ -1,10 +1,9 @@
 "use client";
 
 // Next
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 // Store
-import { useDistrictStore, useSearchBarStore } from "@/store";
+import { useDistrictStore, useRealEstateStore, useSearchBarStore } from "@/store";
 // Components
 import { ApartamentSVG, Card, CardTitle, HouseSVG, LandSVG, ShopSVG, SobradoSVG } from "@/components";
 import PriceCard from "./components/price_card";
@@ -12,106 +11,56 @@ import PriceCard from "./components/price_card";
 import { FaFilter, FaPlus, FaMinus } from "react-icons/fa";
 import { MdOutlineSort, MdOutlineClose, MdDelete } from "react-icons/md";
 
-type Filter = {
-  propertyType: string[];
-  price: { min: number; max: number };
-  rooms: number;
-  bathrooms: number;
-  garages: number;
-  area: number;
+const PROPERTY_LABELS: { type: string; title: string }[] = [
+  { type: "apartment", title: "Apartamento" },
+  { type: "house", title: "Casa" },
+  { type: "land", title: "Terreno" },
+  { type: "shop", title: "Comercial" },
+  { type: "sobrado", title: "Sobrado" },
+];
+
+const SVGS: Record<string, React.ComponentType<{ className?: string }>> = {
+  apartment: ApartamentSVG,
+  house: HouseSVG,
+  land: LandSVG,
+  shop: ShopSVG,
+  sobrado: SobradoSVG,
 };
 
 export default function Searchbar({ children }: { children?: React.ReactNode }) {
-  const { isSearchOpen, setIsSearchOpen } = useSearchBarStore((state) => state);
+  const { isSearchOpen, setIsSearchOpen, filter, setFilter, togglePropertyType, resetFilter } = useSearchBarStore((state) => state);
   const { districtSelected } = useDistrictStore((state) => state);
-  const [filter, setFilter] = useState<Filter>({
-    propertyType: ["apartament", "house", "land", "shop", "sobrado"],
-    price: { min: 0, max: 0 },
-    rooms: 0,
-    bathrooms: 0,
-    garages: 0,
-    area: 50,
-  });
+  const { realEstateList, totalDocs } = useRealEstateStore((state) => state);
 
-  const onPriceChange = (value: number[]) => setFilter((prev) => ({ ...prev, price: { min: value[0], max: value[1] } }));
+  const onPriceChange = (value: number[]) => setFilter({ price: { min: value[0], max: value[1] } });
 
   const buildPropertyCard = (type: string, title: string) => {
-    let propertySvg = <div></div>;
     const isSelected = filter.propertyType.includes(type);
-
-    if (type === "apartament")
-      propertySvg = <ApartamentSVG className={`w-[3.8rem] h-[3.8rem] ${isSelected ? "fill-primary" : "fill-black"}  dark:fill-white`} />;
-    if (type === "house")
-      propertySvg = <HouseSVG className={`w-[3.8rem] h-[3.8rem] ${isSelected ? "fill-primary" : "fill-black"}  dark:fill-white`} />;
-    if (type === "land") propertySvg = <LandSVG className={`w-[3.8rem] h-[3.8rem] ${isSelected ? "fill-primary" : "fill-black"}  dark:fill-white`} />;
-    if (type === "shop") propertySvg = <ShopSVG className={`w-[3.8rem] h-[3.8rem] ${isSelected ? "fill-primary" : "fill-black"}  dark:fill-white`} />;
-    if (type === "sobrado")
-      propertySvg = <SobradoSVG className={`w-[3.8rem] h-[3.8rem] ${isSelected ? "fill-primary" : "fill-black"}  dark:fill-white`} />;
-
-    const handlePropertyClick = () => {
-      let newPropertyType = [];
-
-      if (filter.propertyType.includes(type)) {
-        newPropertyType = filter.propertyType.filter((item) => item !== type);
-      } else {
-        newPropertyType = [...filter.propertyType, type];
-      }
-
-      setFilter((prev) => ({ ...prev, propertyType: newPropertyType }));
-    };
+    const Svg = SVGS[type];
 
     return (
       <Card
-        className={`flex flex-col justify-center items-center select-none cursor-pointer 
+        key={type}
+        className={`flex flex-col justify-center items-center select-none cursor-pointer
           ${isSelected ? "border-2 border-primary dark:bg-primary" : "dark:bg-secondary"}`}
-        onClick={handlePropertyClick}
+        onClick={() => togglePropertyType(type)}
       >
-        {propertySvg}
+        <Svg className={`w-[3.8rem] h-[3.8rem] ${isSelected ? "fill-primary" : "fill-black"} dark:fill-white`} />
         <span className={`font-bold text-[1.4rem] ${isSelected ? "text-primary dark:text-white" : ""}`}>{title}</span>
       </Card>
     );
   };
 
-  const buildRoomsCard = (type: string, title: string) => {
-    const handleButtonClick = (isAdd: boolean, type: string) => {
-      if (type == "rooms") {
-        setFilter((prev) => ({ ...prev, rooms: isAdd ? prev.rooms + 1 : prev.rooms == 0 ? 0 : prev.rooms - 1 }));
-      }
-
-      if (type == "bathrooms") {
-        setFilter((prev) => ({ ...prev, bathrooms: isAdd ? prev.bathrooms + 1 : prev.bathrooms == 0 ? 0 : prev.bathrooms - 1 }));
-      }
-    };
+  const buildCounterCard = (key: "rooms" | "bathrooms" | "garages" | "area", title: string, step = 1) => {
+    const value = filter[key];
+    const change = (isAdd: boolean) => setFilter({ [key]: isAdd ? value + step : Math.max(value - step, 0) });
 
     return (
-      <Card className={`h-full w-full flex flex-col justify-center items-center select-none  mr-[1rem] last:mr-0 dark:bg-secondary`}>
+      <Card className={`h-full w-full flex flex-col justify-center items-center select-none mr-[1rem] last:mr-0 dark:bg-secondary`}>
         <div className="w-full flex justify-between items-center px-[3rem]">
-          <FaMinus className="text-[1.8rem] cursor-pointer" onClick={() => handleButtonClick(false, type)} />
-          <span className="text-[4.6rem]">{type == "rooms" ? filter.rooms : filter.bathrooms}</span>
-          <FaPlus className="text-[1.8rem] cursor-pointer" onClick={() => handleButtonClick(true, type)} />
-        </div>
-        <span className={`font-bold text-[1.4rem] mt-[1rem]`}>{title}</span>
-      </Card>
-    );
-  };
-
-  const buildSpaceCard = (type: string, title: string) => {
-    const handleButtonClick = (isAdd: boolean, type: string) => {
-      if (type == "garages") {
-        setFilter((prev) => ({ ...prev, garages: isAdd ? prev.garages + 1 : prev.garages == 0 ? 0 : prev.garages - 1 }));
-      }
-
-      if (type == "area") {
-        setFilter((prev) => ({ ...prev, area: isAdd ? prev.area + 50 : prev.area == 0 ? 50 : prev.area - 50 }));
-      }
-    };
-
-    return (
-      <Card className={`h-full w-full flex flex-col justify-center items-center select-none  mr-[1rem] last:mr-0 dark:bg-secondary`}>
-        <div className="w-full flex justify-between items-center px-[3rem]">
-          <FaMinus className="text-[1.8rem] cursor-pointer" onClick={() => handleButtonClick(false, type)} />
-          <span className="text-[4.6rem]">{type == "garages" ? filter.garages : filter.area}</span>
-          <FaPlus className="text-[1.8rem] cursor-pointer" onClick={() => handleButtonClick(true, type)} />
+          <FaMinus className="text-[1.8rem] cursor-pointer" onClick={() => change(false)} />
+          <span className="text-[4.6rem]">{value}</span>
+          <FaPlus className="text-[1.8rem] cursor-pointer" onClick={() => change(true)} />
         </div>
         <span className={`font-bold text-[1.4rem] mt-[1rem]`}>{title}</span>
       </Card>
@@ -135,14 +84,14 @@ export default function Searchbar({ children }: { children?: React.ReactNode }) 
           <div className="h-full w-full flex flex-col rounded-[0.8rem]">
             <div className="flex justify-between items-end px-[0.5rem]">
               <div>
-                <span className="text-[3rem] font-bold leading-[3rem]">50</span>
+                <span className="text-[3rem] font-bold leading-[3rem]">{totalDocs ?? realEstateList.length}</span>
                 <span className="italic ml-1">Imóveis</span>
               </div>
               <div className="flex">
                 <Card className="py-2 px-[1.2rem] flex items-center mr-3">
                   <MdOutlineSort size={20} />
                 </Card>
-                <Card className="py-2 px-[1.8rem] flex items-center" onClick={() => setIsSearchOpen(true)}>
+                <Card className="py-2 px-[1.8rem] flex items-center cursor-pointer" onClick={() => setIsSearchOpen(true)}>
                   <FaFilter size={13} />
                   <span className="ml-3 font-bold text-[1.6rem]">Filtros</span>
                 </Card>
@@ -174,10 +123,10 @@ export default function Searchbar({ children }: { children?: React.ReactNode }) 
             </div>
 
             <div className="flex">
-              <Card className="py-2 px-[1.2rem] flex items-center mr-3 bg-red-500">
+              <Card className="py-2 px-[1.2rem] flex items-center mr-3 bg-red-500 cursor-pointer" onClick={resetFilter}>
                 <MdDelete size={20} color="white" />
               </Card>
-              <Card className="py-2 px-[1.8rem] flex items-center" onClick={() => setIsSearchOpen(false)}>
+              <Card className="py-2 px-[1.8rem] flex items-center cursor-pointer" onClick={() => setIsSearchOpen(false)}>
                 <MdOutlineClose size={20} />
                 <span className="ml-3 font-bold text-[1.6rem]">Fechar</span>
               </Card>
@@ -189,17 +138,13 @@ export default function Searchbar({ children }: { children?: React.ReactNode }) 
             <Card className="min-h-[25rem] w-full my-[0.5rem] flex flex-col justify-between items-center p-[0.8rem]">
               <CardTitle className="font-bold text-[2.2rem] mb-[0.8rem]">Tipo de Imóvel</CardTitle>
               <div className="w-full grow grid grid-cols-3 grid-rows-2 grid-flow-col gap-4">
-                {buildPropertyCard("apartament", "Apartamento")}
-                {buildPropertyCard("house", "Casa")}
-                {buildPropertyCard("land", "Terreno")}
-                {buildPropertyCard("shop", "Comercial")}
-                {buildPropertyCard("sobrado", "Sobrado")}
+                {PROPERTY_LABELS.map(({ type, title }) => buildPropertyCard(type, title))}
               </div>
             </Card>
 
             <Card className="min-h-[10rem] w-full my-3 flex flex-col justify-between items-center p-[0.8rem]">
               <CardTitle className="font-bold text-[2.2rem] mb-[0.8rem]">Bairro</CardTitle>
-              {districtSelected.name}
+              <span className="italic">{filter.district || districtSelected?.name || "Todos"}</span>
             </Card>
 
             <Card className="min-h-[25rem] w-full my-3 flex flex-col justify-between items-center p-[0.8rem]">
@@ -209,16 +154,16 @@ export default function Searchbar({ children }: { children?: React.ReactNode }) 
             <Card className="min-h-[22rem] w-full my-3 flex flex-col justify-between items-center p-[0.8rem]">
               <CardTitle className="font-bold text-[2.2rem] mb-[0.8rem] ">Quartos</CardTitle>
               <div className="w-full grow flex">
-                {buildRoomsCard("rooms", "Quartos")}
-                {buildRoomsCard("bathrooms", "Banheiros")}
+                {buildCounterCard("rooms", "Quartos")}
+                {buildCounterCard("bathrooms", "Banheiros")}
               </div>
             </Card>
 
             <Card className="min-h-[25rem] w-full my-3 flex flex-col justify-between items-center p-[0.8rem]">
               <CardTitle className="font-bold text-[2.2rem] mb-[0.8rem]">Espaço</CardTitle>
               <div className="w-full grow flex">
-                {buildSpaceCard("garages", "Garagens")}
-                {buildSpaceCard("area", "Area (m2)")}
+                {buildCounterCard("garages", "Garagens")}
+                {buildCounterCard("area", "Area (m2)", 50)}
               </div>
             </Card>
           </div>
