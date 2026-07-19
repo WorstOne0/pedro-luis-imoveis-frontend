@@ -1,0 +1,17 @@
+services:
+  frontend:
+    build: .
+    container_name: pedro_luis_imoveis_frontend
+    restart: unless-stopped
+    environment:
+      - LETSENCRYPT_HOST=${HOST}
+      - VIRTUAL_HOST=${HOST}
+      - VIRTUAL_PORT=3000
+    expose:
+      - 3000
+    networks:
+      - nginx-proxy
+
+networks:
+  nginx-proxy:
+    external: true

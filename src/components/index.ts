@@ -4,8 +4,6 @@ import GoogleMaps from "./google_maps";
 import Modal from "./modal";
 import Slideshow from "./slideshow";
 //
-import RealEstateCard from "./real_estate_card";
-import Searchbar from "./searchbar";
 import DistrictPolygons from "./district_polygons";
 // SVGS
 import ApartamentSVG from "./svgs/apartament";
@@ -25,8 +23,6 @@ export {
   GoogleMaps,
   Modal,
   Slideshow,
-  RealEstateCard,
-  Searchbar,
   DistrictPolygons,
   // SVGS
   ApartamentSVG,

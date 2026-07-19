@@ -1,13 +1,8 @@
 "use client";
 
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps } from "firebase/app";
-import { getAnalytics, logEvent } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { getAnalytics, isSupported, logEvent, Analytics } from "firebase/analytics";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN,
@@ -18,24 +13,52 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID,
 };
 
-const initializeFirebaseApp = () => {
-  if (typeof window === "undefined") return { app: null, analytics: null };
+// Analytics is optional and off unless explicitly enabled.
+//
+// A try/catch is not enough on its own: once getAnalytics() succeeds, the SDK
+// fires its own Installations request in the background, and an invalid key
+// makes that 400 on every page load with no way for us to catch it. So the
+// switch has to be flipped before Firebase is initialised at all.
+const isEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true";
+const hasConfig = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
+const isConfigured = isEnabled && hasConfig;
 
-  // Initialize Firebase
-  if (!getApps().length) initializeApp(firebaseConfig);
+let app: FirebaseApp | null = null;
+let analyticsPromise: Promise<Analytics | null> | null = null;
 
-  const app = getApps()[0];
-  const analytics = getAnalytics(app);
+const getAnalyticsInstance = () => {
+  if (typeof window === "undefined" || !isConfigured) return Promise.resolve(null);
 
-  return { app, analytics };
+  // Resolved once and reused; initialising per event re-registered the app on
+  // every page view.
+  if (!analyticsPromise) {
+    analyticsPromise = (async () => {
+      try {
+        app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+        // False in unsupported browsers and whenever cookies are blocked.
+        if (!(await isSupported())) return null;
+
+        return getAnalytics(app);
+      } catch (error) {
+        console.warn("Firebase analytics disabled:", error);
+        return null;
+      }
+    })();
+  }
+
+  return analyticsPromise;
 };
 
-const analyticsEvent = (eventName: string, params?: Record<string, any>) => {
-  if (typeof window === "undefined") return;
+const analyticsEvent = async (eventName: string, params?: Record<string, unknown>) => {
+  const analytics = await getAnalyticsInstance();
+  if (!analytics) return;
 
-  const { analytics } = initializeFirebaseApp();
-
-  if (analytics) logEvent(analytics, eventName, params);
+  try {
+    logEvent(analytics, eventName, params);
+  } catch (error) {
+    console.warn("Firebase logEvent failed:", error);
+  }
 };
 
-export { initializeFirebaseApp, analyticsEvent };
+export { getAnalyticsInstance, analyticsEvent, isConfigured as isAnalyticsConfigured };

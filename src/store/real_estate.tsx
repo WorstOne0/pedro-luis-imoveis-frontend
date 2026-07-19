@@ -6,6 +6,8 @@ export type RealEstate = {
   title: string;
   description: string;
   type: string;
+  sale: string;
+  featured: boolean;
   //
   price: number;
   area: number;
@@ -14,6 +16,8 @@ export type RealEstate = {
   garages: number;
   //
   address: Address;
+  //
+  features?: string[];
   //
   thumbnail: string;
   images: string[];
@@ -34,28 +38,23 @@ export type Address = {
   complement: string;
   number: string;
   //
-  position: google.maps.LatLng;
+  // Stored in Mongo as a plain { lat, lng } object, not a google.maps.LatLng
+  // instance — typing it as the class made every read look like it had lat()
+  // and lng() methods.
+  position?: google.maps.LatLngLiteral | null;
 };
 
+// Only UI state lives here now. Server data (the listing list, a single
+// listing) comes from useApiFetch/SWR, which owns caching and revalidation —
+// keeping a second copy here meant the two could disagree.
 type RealEstateStore = {
-  realEstateList: RealEstate[];
   realEstateSelected: RealEstate | null;
-  // Total matching the current filter, which is larger than realEstateList
-  // whenever the results span more than one page.
-  totalDocs: number | null;
-  //
-  setRealEstateList: (realEstateList: RealEstate[]) => void;
-  setRealEstateSelected: (realEstate: RealEstate) => void;
-  setTotalDocs: (totalDocs: number | null) => void;
+  setRealEstateSelected: (realEstate: RealEstate | null) => void;
 };
 
 const useRealEstateStore = create<RealEstateStore>((set) => ({
-  realEstateList: [],
   realEstateSelected: null,
-  totalDocs: null,
-  setRealEstateList: (realEstateList: RealEstate[]) => set({ realEstateList: realEstateList }),
-  setRealEstateSelected: (realEstate: RealEstate) => set({ realEstateSelected: realEstate }),
-  setTotalDocs: (totalDocs: number | null) => set({ totalDocs }),
+  setRealEstateSelected: (realEstate: RealEstate | null) => set({ realEstateSelected: realEstate }),
 }));
 
 export default useRealEstateStore;

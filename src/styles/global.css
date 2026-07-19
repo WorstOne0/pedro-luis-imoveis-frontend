@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -138,7 +137,6 @@
 
   body {
     font-size: 1.8rem;
-    font-family: "Nunito", sans-serif;
     /* @apply text-black dark:text-white; */
   }
 }
@@ -172,5 +170,85 @@
   .scrollbar-gray::-webkit-scrollbar-thumb {
     background: gray;
     border-radius: 0.8rem;
+  }
+}
+
+@layer utilities {
+  /* ------------------------------------------------------------------ *
+   * Page backgrounds
+   *
+   * Four interchangeable patterns built from --primary over --background,
+   * so each one follows the theme automatically. Swap the class on a page
+   * wrapper to try a different look.
+   *
+   *   .bg-diagonal  45° stripes (default choice)
+   *   .bg-grid      blueprint grid
+   *   .bg-dots      dot matrix
+   *   .bg-glow      soft corner wash, no repeating geometry
+   *
+   * Opacities are deliberately low — these sit behind body copy, and the
+   * dark theme needs slightly more contrast to read at all.
+   * ------------------------------------------------------------------ */
+
+  .bg-diagonal {
+    background-color: var(--background);
+    background-image: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--primary) 4%, transparent) 0px,
+      color-mix(in srgb, var(--primary) 4%, transparent) 2px,
+      transparent 2px,
+      transparent 14px
+    );
+  }
+
+  .dark .bg-diagonal {
+    background-image: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--primary) 22%, transparent) 0px,
+      color-mix(in srgb, var(--primary) 22%, transparent) 2px,
+      transparent 2px,
+      transparent 14px
+    );
+  }
+
+  .bg-grid {
+    background-color: var(--background);
+    background-image: linear-gradient(to right, color-mix(in srgb, var(--primary) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--primary) 6%, transparent) 1px, transparent 1px);
+    background-size: 3.2rem 3.2rem;
+  }
+
+  .dark .bg-grid {
+    background-image: linear-gradient(to right, color-mix(in srgb, var(--primary) 28%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--primary) 28%, transparent) 1px, transparent 1px);
+  }
+
+  .bg-dots {
+    background-color: var(--background);
+    background-image: radial-gradient(color-mix(in srgb, var(--primary) 12%, transparent) 1px, transparent 1px);
+    background-size: 2.2rem 2.2rem;
+  }
+
+  .dark .bg-dots {
+    background-image: radial-gradient(color-mix(in srgb, var(--primary) 35%, transparent) 1px, transparent 1px);
+  }
+
+  .bg-glow {
+    background-color: var(--background);
+    background-image: radial-gradient(60rem 40rem at 15% -10%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%),
+      radial-gradient(50rem 36rem at 100% 0%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 70%);
+    background-repeat: no-repeat;
+  }
+
+  .dark .bg-glow {
+    background-image: radial-gradient(60rem 40rem at 15% -10%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 70%),
+      radial-gradient(50rem 36rem at 100% 0%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 70%);
+  }
+
+  /* Fades the pattern out behind the main content so text keeps its
+     contrast while the edges stay decorated. */
+  .bg-pattern-mask {
+    mask-image: radial-gradient(120rem 80rem at 50% 40%, transparent 20%, black 75%);
+    -webkit-mask-image: radial-gradient(120rem 80rem at 50% 40%, transparent 20%, black 75%);
   }
 }

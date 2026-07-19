@@ -1,0 +1,20 @@
+node_modules
+.next
+.git
+.gitignore
+npm-debug.log*
+Dockerfile
+docker-compose.yml
+README.md
+
+# .env is deliberately NOT ignored here.
+#
+# Every variable in this project is NEXT_PUBLIC_*, which Next inlines into the
+# client bundle — they are already visible to anyone who opens the site, so
+# there is nothing secret to leak. It is copied into the build stage only; the
+# runtime image is a separate stage and never receives it.
+#
+# If a non-public variable is ever added to this project, ignore .env again and
+# pass build args explicitly instead.
+.env.local
+.env.*.local
