@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 // Store
 import { RealEstate } from "@/store/real_estate";
-import { useSearchBarStore } from "@/store";
+import { useSearchBarStore, useSavedStore } from "@/store";
 import { isDefaultFilter, normalizeDistrict, toDistrictLabel } from "./store";
 import districtsGeo from "@/utils/districts_geo";
 // Components
@@ -16,7 +16,7 @@ import PillGroup from "./components/pill_group";
 import DistrictSearch from "./components/district_search";
 // Icons
 import { FaFilter } from "react-icons/fa";
-import { MdOutlineSort, MdOutlineClose, MdDeleteOutline, MdArrowForward } from "react-icons/md";
+import { MdOutlineSort, MdOutlineClose, MdDeleteOutline, MdArrowForward, MdFavorite, MdFavoriteBorder } from "react-icons/md";
 
 const PROPERTY_LABELS = [
   { type: "apartment", title: "Apto" },
@@ -41,16 +41,6 @@ const BATHROOM_OPTIONS = [
   { value: 3, label: "3+" },
 ];
 
-const Section = ({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) => (
-  <div className="w-full flex flex-col gap-[1rem]">
-    <div className="w-full flex justify-between items-baseline">
-      <span className="font-bold text-[1.6rem]">{title}</span>
-      {aside}
-    </div>
-    {children}
-  </div>
-);
-
 export default function Searchbar({
   realEstateList,
   catalogue,
@@ -68,6 +58,7 @@ export default function Searchbar({
   const togglePropertyType = useSearchBarStore((state) => state.togglePropertyType);
   const toggleDistrict = useSearchBarStore((state) => state.toggleDistrict);
   const resetFilter = useSearchBarStore((state) => state.resetFilter);
+  const savedIds = useSavedStore((state) => state.savedIds);
 
   // Every district in the city, not just the ones with listings, so this list
   // offers exactly what the map does — otherwise a district picked on the map
@@ -91,6 +82,16 @@ export default function Searchbar({
   }, [catalogue]);
 
   const isClean = isDefaultFilter(filter);
+
+  const buildSection = ({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) => (
+    <div className="w-full flex flex-col gap-[1rem]">
+      <div className="w-full flex justify-between items-baseline">
+        <span className="font-bold text-[1.6rem]">{title}</span>
+        {aside}
+      </div>
+      {children}
+    </div>
+  );
 
   const formatArea = () => {
     const { min, max } = filter.area;
@@ -140,9 +141,11 @@ export default function Searchbar({
       {isSearchOpen && (
         <motion.div
           key={"filters"}
-          initial={{ x: 300, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 300, opacity: 0 }}
+          // Top to bottom: the panel drops over the list rather than sliding in
+          // sideways from off-screen.
+          initial={{ y: "-100%", opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: "-100%", opacity: 0 }}
           transition={{ ease: "easeIn", duration: 0.2 }}
           // z-20, not z-10: the list renders after this panel, so at equal
           // z-index a selected card's check badge painted through it.
@@ -179,28 +182,50 @@ export default function Searchbar({
 
           {/* Body */}
           <div className="min-h-0 grow w-full flex flex-col gap-[2.4rem] px-[1.8rem] py-[2rem] overflow-y-auto">
-            <Section title="Tipo de imóvel">
-              <div className="w-full grid grid-cols-3 gap-[1rem]">
-                {PROPERTY_LABELS.map(({ type, title }) => (
-                  <PropertyTypeCard
-                    key={type}
-                    type={type}
-                    title={title}
-                    isSelected={filter.propertyType.includes(type)}
-                    onToggle={() => togglePropertyType(type)}
-                  />
-                ))}
-              </div>
-            </Section>
-
-            <Section
-              title="Bairro"
-              aside={
-                filter.district.length > 0 ? <span className="text-[1.4rem] text-gray-500">{filter.district.length} selecionado(s)</span> : undefined
-              }
+            <button
+              type="button"
+              aria-pressed={filter.savedOnly}
+              onClick={() => setFilter({ savedOnly: !filter.savedOnly })}
+              className={`w-full flex items-center gap-[1.2rem] rounded-[1rem] border px-[1.6rem] py-[1.4rem] cursor-pointer transition-colors
+                ${filter.savedOnly ? "border-primary bg-primary/5" : "border-border hover:bg-muted/60"}`}
             >
-              <DistrictSearch districts={districts} selected={filter.district} onToggle={toggleDistrict} onClear={() => setFilter({ district: [] })} />
-            </Section>
+              {filter.savedOnly ? <MdFavorite size={20} className="text-red-500" /> : <MdFavoriteBorder size={20} className="text-red-500" />}
+
+              <span className="min-w-0 grow flex flex-col text-left">
+                <span className="text-[1.6rem] font-bold">Salvos</span>
+                <span className="text-[1.3rem] text-gray-500">
+                  {savedIds.length === 0 ? "Nenhum imóvel salvo ainda" : `${savedIds.length} ${savedIds.length === 1 ? "imóvel salvo" : "imóveis salvos"}`}
+                </span>
+              </span>
+
+              {filter.savedOnly && <span className="text-[1.3rem] font-bold text-primary shrink-0">Ativo</span>}
+            </button>
+
+            {buildSection({
+              title: "Tipo de imóvel",
+              children: (
+                <div className="w-full grid grid-cols-3 gap-[1rem]">
+                  {PROPERTY_LABELS.map(({ type, title }) => (
+                    <PropertyTypeCard
+                      key={type}
+                      type={type}
+                      title={title}
+                      isSelected={filter.propertyType.includes(type)}
+                      onToggle={() => togglePropertyType(type)}
+                    />
+                  ))}
+                </div>
+              ),
+            })}
+
+            {buildSection({
+              title: "Bairro",
+              aside:
+                filter.district.length > 0 ? <span className="text-[1.4rem] text-gray-500">{filter.district.length} selecionado(s)</span> : undefined,
+              children: (
+                <DistrictSearch districts={districts} selected={filter.district} onToggle={toggleDistrict} onClear={() => setFilter({ district: [] })} />
+              ),
+            })}
 
             <PriceCard
               catalogue={catalogue}
@@ -208,36 +233,42 @@ export default function Searchbar({
               onPriceChange={(value) => setFilter({ price: { min: value[0], max: value[1] } })}
             />
 
-            <Section title="Quartos">
-              <PillGroup options={ROOM_OPTIONS} value={filter.rooms} onChange={(rooms) => setFilter({ rooms })} />
-            </Section>
+            {buildSection({
+              title: "Quartos",
+              children: <PillGroup options={ROOM_OPTIONS} value={filter.rooms} onChange={(rooms) => setFilter({ rooms })} />,
+            })}
 
-            <Section title="Banheiros">
-              <PillGroup options={BATHROOM_OPTIONS} value={filter.bathrooms} onChange={(bathrooms) => setFilter({ bathrooms })} />
-            </Section>
+            {buildSection({
+              title: "Banheiros",
+              children: <PillGroup options={BATHROOM_OPTIONS} value={filter.bathrooms} onChange={(bathrooms) => setFilter({ bathrooms })} />,
+            })}
 
-            <Section title="Área (m²)" aside={<span className="text-[1.4rem] text-gray-500">{formatArea()}</span>}>
-              <div className="w-full flex items-center gap-[1rem]">
-                {(["min", "max"] as const).map((edge) => (
-                  <div key={edge} className="min-w-0 grow relative">
-                    <input
-                      type="number"
-                      min={0}
-                      value={filter.area[edge] || ""}
-                      onChange={(event) => {
-                        const next = event.target.valueAsNumber;
-                        setFilter({ area: { ...filter.area, [edge]: Number.isNaN(next) ? 0 : Math.max(next, 0) } });
-                      }}
-                      placeholder={edge === "min" ? "100" : "400"}
-                      className="h-[4.4rem] w-full pl-[1.2rem] pr-[4rem] text-[1.5rem] rounded-[0.8rem] bg-gray-100 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <span className="absolute right-[1.2rem] top-1/2 -translate-y-1/2 text-[1.3rem] text-gray-400 pointer-events-none">
-                      {edge === "min" ? "mín" : "máx"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Section>
+            {buildSection({
+              title: "Área (m²)",
+              aside: <span className="text-[1.4rem] text-gray-500">{formatArea()}</span>,
+              children: (
+                <div className="w-full flex items-center gap-[1rem]">
+                  {(["min", "max"] as const).map((edge) => (
+                    <div key={edge} className="min-w-0 grow relative">
+                      <input
+                        type="number"
+                        min={0}
+                        value={filter.area[edge] || ""}
+                        onChange={(event) => {
+                          const next = event.target.valueAsNumber;
+                          setFilter({ area: { ...filter.area, [edge]: Number.isNaN(next) ? 0 : Math.max(next, 0) } });
+                        }}
+                        placeholder={edge === "min" ? "100" : "400"}
+                        className="h-[4.4rem] w-full pl-[1.2rem] pr-[4rem] text-[1.5rem] rounded-[0.8rem] bg-gray-100 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <span className="absolute right-[1.2rem] top-1/2 -translate-y-1/2 text-[1.3rem] text-gray-400 pointer-events-none">
+                        {edge === "min" ? "mín" : "máx"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ),
+            })}
           </div>
 
           {/* Footer */}

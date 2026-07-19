@@ -9,7 +9,6 @@ import { useTheme } from "next-themes";
 // Icons
 import { MdMenu, MdClose } from "react-icons/md";
 import { FaRegMoon, FaRegSun } from "react-icons/fa6";
-import { FiMapPin } from "react-icons/fi";
 //
 import logo from "@/../public/logo/logo.png";
 
@@ -98,14 +97,6 @@ export default function NavBar() {
           <span className="hidden md:block h-[2.4rem] w-px bg-border" />
 
           <div className="flex items-center gap-[1rem]">
-            <button
-              type="button"
-              className="hidden sm:flex items-center gap-[0.8rem] px-[1.6rem] py-[0.8rem] rounded-full border border-border text-[1.5rem] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            >
-              <FiMapPin size={16} />
-              Salvos
-            </button>
-
             <ThemeToggle isDark={isDark} isMounted={isMounted} onToggle={toggleTheme} />
 
             <button

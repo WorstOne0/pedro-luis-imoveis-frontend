@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { RealEstate } from "@/store/real_estate";
-import { Card } from "@/components";
+import { Card, SaveButton } from "@/components";
 import { FaWhatsapp } from "react-icons/fa";
-import { MdShare, MdFavoriteBorder, MdCheck } from "react-icons/md";
+import { MdShare, MdCheck } from "react-icons/md";
 
 const formatBRL = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0, minimumFractionDigits: 0 });
@@ -50,9 +50,7 @@ export default function ContactCard({ realEstate }: { realEstate: RealEstate }) 
       <span className="text-[1.4rem] text-muted-foreground">Valor do imóvel</span>
       <span className="text-[3.4rem] font-extrabold leading-tight">{formatBRL(realEstate.price)}</span>
 
-      <span className="text-[1.3rem] text-muted-foreground mt-[0.6rem]">
-        {pricePerArea ? `≈ ${formatBRL(pricePerArea)}/m² · ` : ""}IPTU sob consulta
-      </span>
+      {pricePerArea && <span className="text-[1.3rem] text-muted-foreground mt-[0.6rem]">≈ {formatBRL(pricePerArea)}/m²</span>}
 
       {whatsappUrl ? (
         <a
@@ -80,13 +78,7 @@ export default function ContactCard({ realEstate }: { realEstate: RealEstate }) 
           {isCopied ? "Link copiado" : "Compartilhar"}
         </button>
 
-        <button
-          type="button"
-          aria-label="Favoritar"
-          className="h-[4.6rem] w-[5.4rem] flex justify-center items-center rounded-[1rem] border border-border cursor-pointer hover:bg-muted"
-        >
-          <MdFavoriteBorder size={20} className="text-red-500" />
-        </button>
+        <SaveButton realEstateId={realEstate._id} />
       </div>
 
       <div className="w-full flex items-center gap-[1.2rem] border-t border-border mt-[2.2rem] pt-[2rem]">

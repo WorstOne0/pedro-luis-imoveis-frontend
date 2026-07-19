@@ -1,180 +1,161 @@
 # Pedro Luis Imóveis — Frontend
 
-> Interactive real estate platform with map-based property browsing, advanced filtering, and detailed property pages.
+> Public listings site for a real estate broker in Cascavel/PR. Map-first
+> browsing, district filtering, and per-listing pages with social link previews.
 
----
+One of five repositories that make up the product:
 
-## 🚀 Features
-
-- **Interactive Google Maps** — browse properties via map markers with type-based icons
-- **Sidebar Listing** — scrollable property cards synchronized with map selection
-- **Advanced Filters** — filter by property type, price range, rooms, bathrooms, garages, and area
-- **District Polygons** — neighborhood boundary overlays on the map
-- **Property Detail Page** — full image gallery (slideshow), address breakdown, pricing, and WhatsApp contact
-- **Dark / Light Mode** — system-aware theme with manual toggle
-- **Firebase Analytics** — page view and event tracking
-
----
-
-## 📸 Preview
-
-The home page displays a full-screen Google Map alongside a floating sidebar containing the search/filter panel and property cards. Clicking a marker scrolls the list to the matching card; clicking a card pans the map to the property. The detail page shows a grid image layout with a fullscreen slideshow.
-
-> Screenshots not included. Run the project locally to preview.
-
----
-
-## 🛠 Tech Stack
-
-| Layer | Technology |
+| Repository | Role |
 |---|---|
-| Framework | Next.js 15 (App Router, Turbopack) |
-| Language | TypeScript 5 |
-| Styling | Tailwind CSS v4 |
-| State | Zustand |
-| Data Fetching | SWR + Axios |
-| Maps | Google Maps API (`@react-google-maps/api`) |
-| Analytics | Firebase Analytics |
-| Animations | Framer Motion |
-| UI Primitives | Radix UI Slider, Lucide React, React Icons |
-| Theme | next-themes |
+| **frontend** (this one) | Public site — map + listings |
+| dashboard | Admin panel — listing CRUD, uploads, auth |
+| backend | REST API |
+| images | Upload, resize and serve photos/video |
+| database | MongoDB container + backup scripts |
 
 ---
 
-## 📂 Project Structure
+## Features
+
+- **Map-first browsing** — Google Maps with a marker per listing, custom pins
+  per property type, and grid clustering that collapses overlapping pins into a
+  count bubble.
+- **District overlays** — the city's 32 neighbourhood polygons. Clicking one
+  filters to it; the Bairro multiselect and the map read and write the same
+  selection, so they never disagree.
+- **Instant filtering** — type, price, rooms, bathrooms, area and district apply
+  with no request per keystroke or slider drag.
+- **Price histogram** with a fixed-bounds range slider; out-of-range bars stay
+  visible and recolour rather than vanishing.
+- **Map tools** — layer menu, compass (heading + tilt reset), zoom, click-to-
+  measure distance with a running total, geolocation, fullscreen.
+- **Listing pages** — image gallery, feature list, map, similar listings, and
+  WhatsApp contact.
+- **SEO and link previews** — server-rendered metadata, a generated OpenGraph
+  card for the site, and per-listing previews carrying the listing's own photo,
+  price and stats.
+- **Dark / light mode**, system-aware with a manual toggle.
+
+---
+
+## Tech stack
+
+Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS 4 ·
+shadcn/ui · Zustand · SWR · `@react-google-maps/api` · MapLibre (`react-map-gl`)
+· Framer Motion · Recharts · Firebase Analytics
+
+---
+
+## Getting started
+
+Requires Node 20+, the backend running on `:4000`, and a Google Maps API key.
+
+```bash
+npm install
+cp .env.example .env     # then fill it in
+npm run dev              # http://localhost:3000
+```
+
+### Environment
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Backend base url (defaults to `http://localhost:4000`) |
+| `NEXT_PUBLIC_SITE_URL` | Canonical site url — **must be the real domain** or social previews break |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API` | Google Maps JS API key |
+| `NEXT_PUBLIC_WHATSAPP` | Broker WhatsApp, digits only, international format |
+| `NEXT_PUBLIC_*` (Firebase) | Analytics config |
+
+All `NEXT_PUBLIC_*` values are **inlined at build time**, so Docker takes them as
+build args — changing one needs a rebuild, not a restart.
+
+> `NEXT_PUBLIC_GOOGLE_MAPS_API` reaches the browser by design; that is how the
+> Maps JS API works. Protect it with HTTP referrer and API restrictions in the
+> Google Cloud console, not by trying to keep it secret.
+
+---
+
+## Project structure
 
 ```
 src/
-├── app/
-│   ├── layout.tsx              # Root layout (NavBar, ThemeProvider, MapProvider)
-│   ├── page.tsx                # Home — map + sidebar listing
-│   ├── real_estate/[id]/
-│   │   └── page.tsx            # Property detail page
-│   ├── about/page.tsx
-│   └── contact/page.tsx
-│
-├── components/
-│   ├── google_maps/            # Map wrapper component
-│   ├── district_polygons/      # Neighborhood polygon overlays
-│   ├── searchbar/              # Filter panel (type, price, rooms, area)
-│   ├── real_estate_card/       # Property listing card
-│   ├── slideshow/              # Fullscreen image gallery
-│   ├── nav_bar/                # Top navigation
-│   ├── modal/                  # Generic modal
-│   └── ui/                     # Shared UI primitives (Card, Input, Slider, Chart)
-│
-├── store/
-│   ├── real_estate.tsx         # Property list & selected property
-│   ├── auth.tsx                # Auth state
-│   └── index.tsx               # Store exports (includes district & searchbar stores)
-│
-├── services/
-│   ├── axios.ts                # Axios instance (base URL config)
-│   ├── firebase.ts             # Firebase initialization & analytics helper
-│   ├── google_maps.tsx         # MapProvider
-│   └── theme_provider.tsx      # next-themes ThemeProvider
-│
-└── hooks/
-    ├── useApiFetch.ts          # SWR + Axios data fetching hook
-    ├── useLogEvent.ts          # Firebase Analytics event hook
-    └── useMount.ts
+  app/
+    layout.tsx            server component — site metadata
+    providers.tsx         client wrapper (theme, navbar, map provider)
+    (home)/
+      page.tsx            map + listing sidebar
+      _components/        searchbar, card, markers, clustering
+      _utils/             client-side filtering
+    real_estate/[id]/
+      page.tsx            server component — generateMetadata per listing
+      _components/        detail view, gallery, contact card
+    about/  contact/
+    opengraph-image.tsx   generated 1200×630 social card
+  components/             shared only — navbar, maps, district polygons, ui/
+  hooks/                  useApiFetch (SWR), useLogEvent
+  lib/                    map markers, generated property glyphs, site constants
+  services/               axios, google maps loader, theme, firebase
+  store/                  zustand stores
+  utils/                  district polygon geometry
 ```
 
----
-
-## ⚙️ Installation
-
-**Prerequisites:** Node.js 18+, pnpm
-
-```bash
-# Clone the repository
-git clone <repo-url>
-cd pedro_luis_imoveis_frontend
-
-# Install dependencies
-pnpm install
-```
-
-Create a `.env.local` file in the project root:
-
-```env
-# Firebase
-NEXT_PUBLIC_API_KEY=
-NEXT_PUBLIC_AUTH_DOMAIN=
-NEXT_PUBLIC_PROJECT_ID=
-NEXT_PUBLIC_STORAGE_BUCKET=
-NEXT_PUBLIC_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_APP_ID=
-NEXT_PUBLIC_MEASUREMENT_ID=
-
-# Google Maps
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
-```
+Route-local code lives beside its route in `_components/` or `_utils/`.
+`src/components` is reserved for what more than one route actually uses.
 
 ---
 
-## ▶️ Usage
+## Notes for anyone reading the code
 
-```bash
-# Development (Turbopack)
-pnpm dev
+**Filtering is client-side on purpose.** The page already downloads the whole
+catalogue — the map draws a marker per listing and the price histogram needs
+every price for its bounds — so asking the API to filter as well was paying
+twice for the same answer. `_utils/filter_real_estate.ts` mirrors the backend's
+query rules; if you change one, change the other. The API keeps its filters for
+the dashboard and for whenever the catalogue outgrows a single fetch.
 
-# Production build
-pnpm build
-pnpm start
+**Map markers are self-contained SVG data URIs.** `lib/property_glyphs.ts` is
+generated from `public/property_svg/` — don't hand-edit it. The glyph has to be
+inlined because an `<image href>` pointing at `/public` is blocked inside a
+`data:` URI.
 
-# Lint
-pnpm lint
-```
+**HTML overlays must render outside `<GoogleMap>`.** Google injects its own
+containers at very high z-indexes, so a panel placed among the map's children is
+drawn but buried. Vector overlays go inside; HTML goes outside.
 
-The app runs on `http://localhost:3000` by default and expects the backend API at `http://localhost:4000`.
-
----
-
-## 🔌 API Integration
-
-The frontend communicates with a REST backend via `useApiFetch` (SWR + Axios).
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/real_estate` | `GET` | Fetch all property listings |
-| `/real_estate/:id` | `POST` | Fetch a single property by ID |
-
-The Axios base URL is configured in `src/services/axios.ts`. Update it to point to your backend.
+**District names differ between the map data and the listings** — case, accents,
+and two outright spelling mismatches. `normalizeDistrict()` and an alias table
+bridge it, and a polygon click resolves to the listing spelling before anything
+reaches the API.
 
 ---
 
-## 🧪 Testing
+## Known limitations
 
-No test suite is configured in the current codebase.
-
----
-
-## 📌 Roadmap
-
-- [ ] Wire up filter state to API query parameters
-- [ ] Implement About and Contact pages
-- [ ] Add authentication flow (store scaffolded in `src/store/auth.tsx`)
-- [ ] Complete property attributes display on detail page (rooms, bathrooms, garages currently hardcoded)
-- [ ] Add loading skeletons and error states
+- 17 of the 25 current listings carry `{lat: 0, lng: 0}` coordinates from a
+  legacy import, so the map shows 8 of them. A data problem, not a code one —
+  those listings need geocoding.
+- No automated tests. Verification is manual, against the running backend.
+- `utils/districts_geo.js` carries a few misspelled district names.
 
 ---
 
-## 🤝 Contributing
+## Project status and contributions
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/your-feature`
-3. Commit your changes
-4. Open a pull request against `main`
+This is a commissioned project built for a specific business. It is **not** an
+open source project and is not accepting contributions, feature requests or
+pull requests.
 
----
+## Copyright and licence
 
-## 📄 License
+**Copyright © 2026 Lucca Gabriel. All rights reserved.**
 
-Private project — no license specified.
+This repository is published so the source can be **read**, as a portfolio piece
+and for reference. It is deliberately published **without a licence**, which
+under default copyright law means all rights are reserved.
 
----
+Viewing and forking within GitHub are permitted by GitHub's Terms of Service.
+That does **not** grant permission to use, copy, modify, deploy or redistribute
+this code. Third-party dependencies keep their own licences, and Pedro Luis
+Imóveis brand assets are the property of their owner.
 
-**Short description:** Interactive Brazilian real estate platform with Google Maps browsing, property filtering, and detail pages. Built with Next.js 15 and TypeScript.
-
-**Suggested GitHub tags:** `nextjs`, `real-estate`, `google-maps`, `typescript`, `tailwindcss`, `zustand`, `firebase`, `framer-motion`, `react`
+See [`COPYRIGHT.md`](COPYRIGHT.md) for the full terms.

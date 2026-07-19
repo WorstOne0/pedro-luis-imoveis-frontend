@@ -8,6 +8,7 @@ export type RealEstate = {
   type: string;
   sale: string;
   featured: boolean;
+  sold: boolean;
   //
   price: number;
   area: number;

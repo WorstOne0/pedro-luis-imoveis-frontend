@@ -20,11 +20,12 @@ export default function Contact() {
     { Icon: MdOutlineLocationOn, label: "Endereço", value: CONTACT.city, href: null, tone: "text-primary" },
   ];
 
+  // Filtered, so an unset channel is left out rather than linking nowhere.
   const socials = [
     { Icon: FaInstagram, href: CONTACT.instagram, label: "Instagram" },
     { Icon: FaFacebookF, href: CONTACT.facebook, label: "Facebook" },
     { Icon: FaWhatsapp, href: whatsappLink(), label: "WhatsApp" },
-  ];
+  ].filter((social) => Boolean(social.href));
 
   return (
     <div className="h-full w-full overflow-y-auto bg-diagonal">

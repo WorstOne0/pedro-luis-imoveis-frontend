@@ -15,6 +15,9 @@ export type Filter = {
   // ticking the multiselect write to this same list.
   district: string[];
   search: string;
+  // Show only listings saved in localStorage. Applied on the client, since the
+  // API knows nothing about a visitor's saved list.
+  savedOnly: boolean;
 };
 
 /**
@@ -74,6 +77,7 @@ export const DEFAULT_FILTER: Filter = {
   area: { min: 0, max: 0 },
   district: [],
   search: "",
+  savedOnly: false,
 };
 
 /** True when nothing is narrowed, used to disable the "Limpar" action. */
@@ -87,34 +91,8 @@ export const isDefaultFilter = (filter: Filter) =>
   filter.area.min === 0 &&
   filter.area.max === 0 &&
   filter.district.length === 0 &&
-  filter.search === "";
-
-/**
- * Serialise the filter into the query string GET /real_estate accepts.
- * Neutral values are omitted so the request stays readable and SWR can cache
- * "no filters" under a single key.
- */
-export const toQueryString = (filter: Filter) => {
-  const params = new URLSearchParams();
-
-  // Sending every type is the same as sending none, and a shorter url.
-  if (filter.propertyType.length > 0 && filter.propertyType.length < PROPERTY_TYPES.length) {
-    params.set("type", filter.propertyType.join(","));
-  }
-
-  if (filter.price.min > 0) params.set("minPrice", String(filter.price.min));
-  if (filter.price.max > 0) params.set("maxPrice", String(filter.price.max));
-  if (filter.rooms > 0) params.set("rooms", String(filter.rooms));
-  if (filter.bathrooms > 0) params.set("bathrooms", String(filter.bathrooms));
-  if (filter.garages > 0) params.set("garages", String(filter.garages));
-  if (filter.area.min > 0) params.set("minArea", String(filter.area.min));
-  if (filter.area.max > 0) params.set("maxArea", String(filter.area.max));
-  if (filter.district.length > 0) params.set("district", filter.district.join(","));
-  if (filter.search.trim()) params.set("search", filter.search.trim());
-
-  const query = params.toString();
-  return query ? `?${query}` : "";
-};
+  filter.search === "" &&
+  !filter.savedOnly;
 
 type SearchBarStore = {
   isSearchOpen: boolean;

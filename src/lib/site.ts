@@ -31,8 +31,11 @@ export const CONTACT = {
   whatsappDisplay: formatBrazilPhone(WHATSAPP_DIGITS) || "(45) 99999-9999",
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contato@pedroluisimoveis.com.br",
   city: "Cascavel · Paraná",
-  instagram: process.env.NEXT_PUBLIC_INSTAGRAM ?? "https://instagram.com",
-  facebook: process.env.NEXT_PUBLIC_FACEBOOK ?? "https://facebook.com",
+  site: process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.pedroluisimoveis.com.br",
+  instagram: process.env.NEXT_PUBLIC_INSTAGRAM ?? "https://www.instagram.com/pedroluisimoveis/",
+  // Empty on purpose — there is no Facebook page. Anything rendering social
+  // links should skip a falsy value rather than linking to facebook.com.
+  facebook: process.env.NEXT_PUBLIC_FACEBOOK ?? "",
 };
 
 /** wa.me link with an optional prefilled message. */

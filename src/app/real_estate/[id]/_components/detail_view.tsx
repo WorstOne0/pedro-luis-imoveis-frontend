@@ -90,7 +90,10 @@ export default function DetailView({ id }: { id: string }) {
           {/* Left column */}
           <div className="min-w-0 grow flex flex-col">
             <div className="flex items-center gap-[0.8rem] flex-wrap">
-              {realEstate.featured && (
+              {realEstate.sold && (
+                <span className="text-[1.2rem] font-bold px-[1rem] py-[0.4rem] rounded-full bg-red-600 text-white">VENDIDO</span>
+              )}
+              {realEstate.featured && !realEstate.sold && (
                 <span className="text-[1.2rem] font-bold px-[1rem] py-[0.4rem] rounded-full bg-amber-400 text-black">★ Destaque</span>
               )}
               <span className="text-[1.2rem] font-bold px-[1rem] py-[0.4rem] rounded-full bg-primary/10 text-primary">
@@ -178,7 +181,8 @@ export default function DetailView({ id }: { id: string }) {
 
           {/* Right column */}
           <div className="w-full lg:w-[38rem] shrink-0">
-            <div className="lg:sticky lg:top-[1.5rem]">
+            {/* 11rem clears the fixed navbar — at 1.5rem the card slid under it. */}
+            <div className="lg:sticky lg:top-[11rem]">
               <ContactCard realEstate={realEstate} />
             </div>
           </div>

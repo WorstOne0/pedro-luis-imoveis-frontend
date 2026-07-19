@@ -5,6 +5,7 @@ import Modal from "./modal";
 import Slideshow from "./slideshow";
 //
 import DistrictPolygons from "./district_polygons";
+import SaveButton from "./save_button";
 // SVGS
 import ApartamentSVG from "./svgs/apartament";
 import HouseSVG from "./svgs/house";
@@ -24,6 +25,7 @@ export {
   Modal,
   Slideshow,
   DistrictPolygons,
+  SaveButton,
   // SVGS
   ApartamentSVG,
   HouseSVG,
