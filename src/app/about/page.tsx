@@ -7,7 +7,7 @@ import { BROKER } from "@/lib/site";
 // Icons
 import { FiClock, FiShield, FiBriefcase } from "react-icons/fi";
 //
-import logo from "@/../public/logo/logo.png";
+import portrait from "@/../public/broker.jpg";
 
 export const metadata: Metadata = {
   title: "Sobre",
@@ -68,11 +68,8 @@ export default function About() {
 
           {/* Portrait */}
           <div className="w-full lg:w-[42rem] shrink-0 flex flex-col gap-[1.2rem]">
-            {/* The logo stands in until a photo of the broker exists. Swap the
-                src for the portrait and drop `p-[4rem] object-contain` when it
-                does — a real photo wants to fill the frame. */}
             <div className="w-full aspect-[3/4] rounded-[1.2rem] border border-border bg-muted/40 overflow-hidden">
-              <img src={logo.src} alt={BROKER.company} className="h-full w-full object-contain p-[4rem]" />
+              <img src={portrait.src} alt={BROKER.name} className="h-full w-full object-cover" />
             </div>
 
             <span className="text-[1.3rem] text-muted-foreground text-center">{BROKER.role}</span>
